@@ -1,5 +1,5 @@
 {
-  "name": "My Volume Master",
+  "name": "Volume Manager",
   "version": "1.0.0",
   "manifest_version": 2,
   "icons": {
@@ -8,12 +8,13 @@
     "128": "icons/icon128.png"
   },
   "browser_action": {
-    "default_title": "My Volume Master"
+    "default_title": "Volume Manager"
   },
   "permissions": [
     "tabs",
     "tabCapture",
-    "activeTab"
+    "activeTab",
+    "contextMenus"
   ],
   "background": {
     "scripts": [

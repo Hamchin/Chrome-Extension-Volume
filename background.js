@@ -6,9 +6,10 @@ const createAudio = async (id) => {
     const stream = await new Promise((resolve) => {
         chrome.tabCapture.capture(
             { audio: true, video: false },
-            (stream) => resolve(stream)
+            (stream) => resolve(chrome.runtime.lastError ? null : stream)
         );
     });
+    if (stream === null) return false;
     const audio = {};
     audio.context = new window.AudioContext;
     audio.stream = stream;
@@ -20,16 +21,23 @@ const createAudio = async (id) => {
     audio.volume = 0;
     audio.gainNode.gain.value = 0;
     data[id] = audio;
+    return true;
 };
 
-// 停止中の音声モジュールを削除する
-const deleteInactiveAudio = async () => {
-    await new Promise(resolve => setTimeout(resolve, 10));
+// 音声モジュールを削除する
+const deleteAudio = (id) => {
+    if (id in data === false) return;
+    const audio = data[id];
+    audio.stream.getTracks().forEach(track => track.stop());
+    audio.context.close();
+    delete data[id];
+};
+
+// 停止中の音声モジュールを全て削除する
+const deleteInactiveAudio = () => {
     for (const [id, audio] of Object.entries(data)) {
         if (audio.stream.active) continue;
-        audio.stream.getTracks().forEach(track => track.stop());
-        audio.context.close();
-        delete data[id];
+        deleteAudio(id);
     }
 };
 
@@ -50,7 +58,8 @@ const handleCommand = async (command) => {
     // 該当タブの音声モジュールが存在しない場合
     if (tab.id in data === false) {
         // 音声モジュールを作成する
-        await createAudio(tab.id);
+        const status = await createAudio(tab.id);
+        if (status === false) return;
         // ミュートを解除する
         chrome.tabs.update(tab.id, { muted: false });
     }
@@ -92,6 +101,7 @@ chrome.tabs.onCreated.addListener((tab) => {
 
 // タブ削除イベント -> 停止中の音声モジュールを削除する
 chrome.tabs.onRemoved.addListener((tabId) => {
+    deleteAudio(tabId);
     deleteInactiveAudio();
 });
 
@@ -113,4 +123,23 @@ chrome.commands.onCommand.addListener((command) => {
 // アイコンクリックイベント -> ミュートの状態を切り替える
 chrome.browserAction.onClicked.addListener((tab) => {
     handleCommand('volume-mute');
+});
+
+// コンテキストメニュー
+chrome.contextMenus.create({
+    type: 'normal',
+    id: 'RESET_AUDIO',
+    title: 'リセット',
+    contexts: ['browser_action']
+}, () => chrome.runtime.lastError);
+
+// クリックイベント: コンテキストメニュー
+chrome.contextMenus.onClicked.addListener((info, tab) => {
+    // 該当タブの音声をリセットする
+    if (info.menuItemId === 'RESET_AUDIO') {
+        deleteAudio(tab.id);
+        chrome.tabs.update(tab.id, { muted: false });
+        chrome.browserAction.setBadgeText({ tabId: tab.id, text: '' });
+        chrome.browserAction.setIcon({ path: 'icons/icon16.png', tabId: tab.id });
+    }
 });
