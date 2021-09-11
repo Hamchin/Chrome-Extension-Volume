@@ -78,7 +78,7 @@ const handleCommand = async (command) => {
     if (command === 'volume-up' || command === 'volume-down') {
         // 音量アップの場合 -> 音量を5%上げる
         if (command === 'volume-up') {
-            audio.volume = Math.min(100, audio.volume + 5);
+            audio.volume = Math.min(1000, audio.volume + 5);
         }
         // 音量ダウンの場合 -> 音量を5%下げる
         if (command === 'volume-down') {
@@ -100,7 +100,8 @@ chrome.tabs.onCreated.addListener((tab) => {
 });
 
 // タブ削除イベント -> 停止中の音声モジュールを削除する
-chrome.tabs.onRemoved.addListener((tabId) => {
+chrome.tabs.onRemoved.addListener(async (tabId) => {
+    await new Promise(resolve => setTimeout(resolve, 100));
     deleteAudio(tabId);
     deleteInactiveAudio();
 });
