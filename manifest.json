@@ -25,19 +25,22 @@
   "commands": {
     "volume-up": {
       "suggested_key": {
-        "default": "Alt+Up"
+        "windows": "Ctrl+Up",
+        "mac": "Alt+Up"
       },
       "description": "Volume Up"
     },
     "volume-down": {
       "suggested_key": {
-        "default": "Alt+Down"
+        "windows": "Ctrl+Down",
+        "mac": "Alt+Down"
       },
       "description": "Volume Down"
     },
     "volume-mute": {
       "suggested_key": {
-        "default": "Alt+M"
+        "windows": "Ctrl+M",
+        "mac": "Alt+M"
       },
       "description": "Volume Mute"
     }
